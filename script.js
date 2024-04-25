@@ -14,6 +14,10 @@ let intervalId;
 let score = 0;
 let gameOver = false;
 
+let highScore = localStorage.getItem("high-score") || 0;
+
+highScoreElement.innerText = `High Score: ${highScore}`
+
 // Управление змейкой
 
 function changeDirection(e) {
@@ -38,19 +42,46 @@ function changeDirection(e) {
 
 // Получаем случайную точку для еды
 
-function updateFoodPosition () {
+function updateFoodPosition() {
     foodX = Math.floor(Math.random() * 30) + 1
     foodY = Math.floor(Math.random() * 30) + 1
 }
 
+const handleGameOver = () => {
+    clearInterval(intervalId)
+    alert("Game Over! Press OK to replay")
+    location.reload();
+}
+
 // Игровая функция, которую вызываем через интервал
-function initGame () {
+function initGame() {
     // Размешаем еду на экране
+    if (gameOver) return handleGameOver();
+
     let html = `<div class="food" style="grid-area:${foodY}/${foodX}"></div>`
+    // Когда съедаем еду, позиция меняется на случайную
+    if (snakeX === foodX && snakeY == foodY) {
+        updateFoodPosition()
+        // Добавляем элемент к змейке
+        snakeBody.push([foodX, foodY])
+        // Добавляем score
+        score = score + 1;
+        scoreElement.textContent = 'Score: ' + score;
+        if (score > highScore) {
+            highScore = score;
+            highScoreElement.textContent = "High Score: " + highScore;
+        }
+    }
 
     // меняем расположение змеи
+    // Голова
     snakeX += velocityX;
     snakeY += velocityY;
+
+    // Хвост
+    for (let i = snakeBody.length - 1; i > 0; i--) {
+        snakeBody[i] = snakeBody[i - 1]
+    }
 
     // Тело змеи
     snakeBody[0] = [snakeX, snakeY];
@@ -59,14 +90,16 @@ function initGame () {
     if (snakeX <= 0 || snakeX > 30 || snakeY <= 0 || snakeY > 30) {
         gameOver = true;
 
-        clearInterval(intervalId)
-        alert("Game Over! Press OK to replay")
-        location.reload();
+        gameOver = true;
     }
 
     // Cоздадим div для каждой части змеи
     for (let i = 0; i < snakeBody.length; i++) {
         html += `<div class="head" style="grid-area:${snakeBody[i][1]} / ${snakeBody[i][0]}"></div>`
+
+        if (i !== 0 && snakeBody[0][1] === snakeBody[i][1] && snakeBody[0][0] === snakeBody[i][0]) {
+            gameOver = true;
+        }
     }
 
 
@@ -88,8 +121,8 @@ intervalId = setInterval(initGame, 100);
 document.addEventListener("keyup", changeDirection);
 
 // События на кнопки под экраном
-controls.forEach(button => button.addEventListener("click",() => changeDirection(
+controls.forEach(button => button.addEventListener("click", () => changeDirection(
 
     // Создаем объект наподобие event
-    {code: button.dataset.key}
+    { code: button.dataset.key }
 )))
