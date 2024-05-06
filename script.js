@@ -70,6 +70,8 @@ function initGame() {
         if (score > highScore) {
             highScore = score;
             highScoreElement.textContent = "High Score: " + highScore;
+            // Записываем highScore в localhost
+            localStorage.setItem("high-score", highScore)
         }
     }
 
